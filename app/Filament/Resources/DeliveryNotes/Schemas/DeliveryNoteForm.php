@@ -2,12 +2,16 @@
 
 namespace App\Filament\Resources\DeliveryNotes\Schemas;
 
+use App\Models\Article;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class DeliveryNoteForm
@@ -55,6 +59,50 @@ class DeliveryNoteForm
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
+
+                Section::make('Positionen')
+                    ->schema([
+                        Repeater::make('items')
+                            ->label('Positionen')
+                            ->relationship()
+                            ->schema([
+                                Select::make('article_id')
+                                    ->label('Artikel')
+                                    ->relationship('article', 'name')
+                                    ->required()
+                                    ->searchable()
+                                    ->preload()
+                                    ->live()
+                                    ->afterStateUpdated(function (Set $set, $state) {
+                                        $article = Article::find($state);
+
+                                        if (! $article) {
+                                            return;
+                                        }
+
+                                        $set('unit', $article->unit);
+                                    }),
+
+                                TextInput::make('quantity')
+                                    ->label('Menge')
+                                    ->numeric()
+                                    ->required()
+                                    ->default(1),
+
+                                TextInput::make('unit')
+                                    ->label('Einheit'),
+
+                                Textarea::make('description')
+                                    ->label('Beschreibung')
+                                    ->rows(2)
+                                    ->columnSpanFull(),
+                            ])
+                            ->columns(3)
+                            ->defaultItems(1)
+                            ->addActionLabel('Position hinzufügen')
+                            ->reorderable(false)
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 }

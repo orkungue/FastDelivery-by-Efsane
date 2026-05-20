@@ -23,8 +23,7 @@ class CustomerForm
 
                         TextInput::make('name')
                             ->label('Name')
-                            ->required()
-                            ->searchable(),
+                            ->required(),
 
                         TextInput::make('contact_person')
                             ->label('Ansprechpartner'),

@@ -22,4 +22,9 @@ class Article extends Model
         'price' => 'decimal:2',
         'active' => 'boolean',
     ];
+
+    public function deliveryNoteItems()
+    {
+        return $this->hasMany(DeliveryNoteItem::class);
+    }
 }
