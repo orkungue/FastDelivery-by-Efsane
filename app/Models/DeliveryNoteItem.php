@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class DeliveryNoteItem extends Model
 {
@@ -13,11 +13,13 @@ class DeliveryNoteItem extends Model
         'delivery_note_id',
         'article_id',
         'quantity',
+        'delivered_quantity',
         'return_quantity',
     ];
 
     protected $casts = [
         'quantity' => 'decimal:2',
+        'delivered_quantity' => 'decimal:2',
         'return_quantity' => 'decimal:2',
     ];
 

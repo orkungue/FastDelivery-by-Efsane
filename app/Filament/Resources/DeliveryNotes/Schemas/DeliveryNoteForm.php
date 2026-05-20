@@ -8,14 +8,12 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
-use Filament\Forms\Components\ViewField;
 
 class DeliveryNoteForm
 {
@@ -28,21 +26,22 @@ class DeliveryNoteForm
                         TextInput::make('delivery_number')
                             ->label('Lieferscheinnummer')
                             ->required()
-                            ->unique(ignoreRecord: true),
+                            ->unique(ignoreRecord: true)
+                            ->readOnly(fn () => ! Auth::user()?->isAdmin()),
 
                         Select::make('customer_id')
                             ->label('Kunde')
                             ->relationship('customer', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->disabled(fn () => ! Auth::user()?->isAdmin()),
 
                         Select::make('user_id')
                             ->label('Fahrer')
                             ->relationship('user', 'name')
                             ->searchable()
                             ->preload()
-                            ->default(fn () => Auth::id())
                             ->visible(fn () => Auth::user()?->isAdmin()),
 
                         Hidden::make('user_id')
@@ -50,45 +49,23 @@ class DeliveryNoteForm
                             ->visible(fn () => ! Auth::user()?->isAdmin()),
 
                         DatePicker::make('delivery_date')
-                            ->label('Lieferdatum')
-                            ->default(now()),
-
-                        Select::make('status')
-                            ->label('Status')
+                            ->label('Planungsdatum')
                             ->required()
-                            ->options([
-                                'draft' => 'Entwurf',
-                                'open' => 'Offen',
-                                'delivered' => 'Geliefert',
-                                'cancelled' => 'Storniert',
-                            ])
-                            ->default('draft'),
-
-                        Toggle::make('active')
-                            ->label('Aktiv')
-                            ->default(true),
-
-                        Textarea::make('notes')
-                            ->label('Notizen')
-                            ->rows(3)
-                            ->columnSpanFull(),
-ViewField::make('customer_signature')
-    ->label('Kunden-Unterschrift')
-    ->view('filament.forms.signature-pad')
-    ->columnSpanFull(),
+                            ->disabled(fn () => ! Auth::user()?->isAdmin()),
                     ])
                     ->columns(2),
 
                 Section::make('Positionen')
                     ->schema([
                         Repeater::make('items')
-                            ->label('Verfügbare Artikel')
+                            ->label('Artikel')
                             ->default(fn () => Article::where('active', true)
                                 ->orderBy('name')
                                 ->get()
                                 ->map(fn (Article $article) => [
                                     'article_id' => $article->id,
                                     'quantity' => 0,
+                                    'delivered_quantity' => 0,
                                     'return_quantity' => 0,
                                 ])
                                 ->toArray())
@@ -107,7 +84,14 @@ ViewField::make('customer_signature')
                                     }),
 
                                 TextInput::make('quantity')
-                                    ->label('Menge')
+                                    ->label('Geplant')
+                                    ->numeric()
+                                    ->required()
+                                    ->minValue(0)
+                                    ->readOnly(fn () => ! Auth::user()?->isAdmin()),
+
+                                TextInput::make('delivered_quantity')
+                                    ->label('Geliefert')
                                     ->numeric()
                                     ->required()
                                     ->minValue(0)
@@ -120,10 +104,18 @@ ViewField::make('customer_signature')
                                     ->minValue(0)
                                     ->default(0),
                             ])
-                            ->columns(3)
+                            ->columns(4)
                             ->addable(false)
                             ->deletable(false)
                             ->reorderable(false)
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Kunden-Unterschrift')
+                    ->schema([
+                        ViewField::make('customer_signature')
+                            ->label('Kunden-Unterschrift')
+                            ->view('filament.forms.signature-pad')
                             ->columnSpanFull(),
                     ]),
             ]);

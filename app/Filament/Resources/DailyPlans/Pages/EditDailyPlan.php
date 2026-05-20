@@ -1,26 +1,17 @@
 <?php
 
-namespace App\Filament\Resources\DeliveryNotes\Pages;
+namespace App\Filament\Resources\DailyPlans\Pages;
 
-use App\Filament\Resources\DeliveryNotes\DeliveryNoteResource;
+use App\Filament\Resources\DailyPlans\DailyPlanResource;
 use App\Models\Article;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
-class EditDeliveryNote extends EditRecord
+class EditDailyPlan extends EditRecord
 {
-    protected static string $resource = DeliveryNoteResource::class;
+    protected static string $resource = DailyPlanResource::class;
 
     protected array $itemsData = [];
-
-    public function mount(int|string $record): void
-    {
-        parent::mount($record);
-
-        if (! auth()->user()?->isAdmin() && $this->record->user_id !== auth()->id()) {
-            abort(403);
-        }
-    }
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
@@ -52,12 +43,6 @@ class EditDeliveryNote extends EditRecord
 
         unset($data['items']);
 
-        if (! auth()->user()?->isAdmin()) {
-            unset($data['delivery_number'], $data['customer_id'], $data['delivery_date']);
-            $data['user_id'] = auth()->id();
-            $data['status'] = 'delivered';
-        }
-
         return $data;
     }
 
@@ -85,8 +70,8 @@ class EditDeliveryNote extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return auth()->user()?->isAdmin()
-            ? [DeleteAction::make()]
-            : [];
+        return [
+            DeleteAction::make(),
+        ];
     }
 }
