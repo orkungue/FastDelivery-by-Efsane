@@ -16,6 +16,7 @@ class DeliveryNote extends Model
         'delivery_date',
         'status',
         'notes',
+        'customer_signature',
         'active',
     ];
 

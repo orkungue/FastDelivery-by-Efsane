@@ -56,6 +56,14 @@
             margin-bottom: 30px;
         }
 
+        .signature-box {
+            min-height: 70px;
+            border: 1px solid #ddd;
+            padding: 12px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+
         @media print {
             .print-button {
                 display: none;
@@ -107,7 +115,7 @@
                 <th>Artikelnr.</th>
                 <th>Artikel</th>
                 <th class="right">Menge</th>
-                <th>Retoure</th>
+                <th class="right">Retoure</th>
             </tr>
         </thead>
         <tbody>
@@ -116,7 +124,7 @@
                     <td>{{ $item->article->article_number }}</td>
                     <td>{{ $item->article->name }}</td>
                     <td class="right">{{ number_format($item->quantity, 2, ',', '.') }}</td>
-                    <td>{{ $item->return ? 'Ja' : 'Nein' }}</td>
+                    <td class="right">{{ number_format($item->return_quantity, 2, ',', '.') }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -127,6 +135,15 @@
     <div class="section">
         <strong>Notizen</strong><br>
         {{ $deliveryNote->notes }}
+    </div>
+@endif
+
+@if($deliveryNote->customer_signature)
+    <div class="section">
+        <strong>Kunden-Unterschrift / Zeichen</strong>
+        <div class="signature-box">
+    <img src="{{ $deliveryNote->customer_signature }}" style="max-width: 300px; max-height: 120px;">
+</div>
     </div>
 @endif
 

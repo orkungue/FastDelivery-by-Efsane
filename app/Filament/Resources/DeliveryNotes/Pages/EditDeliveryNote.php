@@ -37,7 +37,7 @@ class EditDeliveryNote extends EditRecord
                 return [
                     'article_id' => $article->id,
                     'quantity' => $existingItem?->quantity ?? 0,
-                    'return' => $existingItem?->return ?? false,
+                    'return_quantity' => $existingItem?->return_quantity ?? 0,
                 ];
             })
             ->toArray();
@@ -63,14 +63,17 @@ class EditDeliveryNote extends EditRecord
         $this->record->items()->delete();
 
         foreach ($this->itemsData as $item) {
-            if ((float) ($item['quantity'] ?? 0) <= 0) {
+            $quantity = (float) ($item['quantity'] ?? 0);
+            $returnQuantity = (float) ($item['return_quantity'] ?? 0);
+
+            if ($quantity <= 0 && $returnQuantity <= 0) {
                 continue;
             }
 
             $this->record->items()->create([
                 'article_id' => $item['article_id'],
-                'quantity' => $item['quantity'],
-                'return' => (bool) ($item['return'] ?? false),
+                'quantity' => $quantity,
+                'return_quantity' => $returnQuantity,
             ]);
         }
     }

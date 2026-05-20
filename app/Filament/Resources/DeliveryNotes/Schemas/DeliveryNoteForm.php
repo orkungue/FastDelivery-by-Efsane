@@ -15,6 +15,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Components\ViewField;
 
 class DeliveryNoteForm
 {
@@ -71,6 +72,10 @@ class DeliveryNoteForm
                             ->label('Notizen')
                             ->rows(3)
                             ->columnSpanFull(),
+ViewField::make('customer_signature')
+    ->label('Kunden-Unterschrift')
+    ->view('filament.forms.signature-pad')
+    ->columnSpanFull(),
                     ])
                     ->columns(2),
 
@@ -84,7 +89,7 @@ class DeliveryNoteForm
                                 ->map(fn (Article $article) => [
                                     'article_id' => $article->id,
                                     'quantity' => 0,
-                                    'return' => false,
+                                    'return_quantity' => 0,
                                 ])
                                 ->toArray())
                             ->schema([
@@ -108,9 +113,12 @@ class DeliveryNoteForm
                                     ->minValue(0)
                                     ->default(0),
 
-                                Toggle::make('return')
+                                TextInput::make('return_quantity')
                                     ->label('Retoure')
-                                    ->default(false),
+                                    ->numeric()
+                                    ->required()
+                                    ->minValue(0)
+                                    ->default(0),
                             ])
                             ->columns(3)
                             ->addable(false)

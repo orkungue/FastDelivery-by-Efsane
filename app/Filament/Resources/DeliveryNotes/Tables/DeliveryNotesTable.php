@@ -62,7 +62,7 @@ class DeliveryNotesTable
                 IconColumn::make('has_return')
                     ->label('Retoure')
                     ->boolean()
-                    ->state(fn ($record): bool => $record->items()->where('return', true)->exists()),
+                    ->state(fn ($record): bool => $record->items()->where('return_quantity', '>', 0)->exists()),
 
                 IconColumn::make('active')
                     ->label('Aktiv')
@@ -96,7 +96,7 @@ class DeliveryNotesTable
                 Filter::make('has_return')
                     ->label('Mit Retoure')
                     ->query(fn (Builder $query): Builder => $query->whereHas('items', function (Builder $query) {
-                        return $query->where('return', true);
+                        return $query->where('return_quantity', '>', 0);
                     })),
 
                 Filter::make('active')
