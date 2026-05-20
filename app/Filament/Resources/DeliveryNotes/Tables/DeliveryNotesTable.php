@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DeliveryNotes\Tables;
 
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -47,6 +48,12 @@ class DeliveryNotesTable
             ])
             ->defaultSort('delivery_date', 'desc')
             ->recordActions([
+                Action::make('print')
+                    ->label('Drucken')
+                    ->icon('heroicon-o-printer')
+                    ->url(fn ($record) => route('delivery-notes.print', $record))
+                    ->openUrlInNewTab(),
+
                 EditAction::make(),
             ])
             ->toolbarActions([
