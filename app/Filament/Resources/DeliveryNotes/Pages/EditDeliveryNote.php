@@ -3,12 +3,66 @@
 namespace App\Filament\Resources\DeliveryNotes\Pages;
 
 use App\Filament\Resources\DeliveryNotes\DeliveryNoteResource;
+use App\Models\Article;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditDeliveryNote extends EditRecord
 {
     protected static string $resource = DeliveryNoteResource::class;
+
+    protected array $itemsData = [];
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $existingItems = $this->record->items()
+            ->get()
+            ->keyBy('article_id');
+
+        $data['items'] = Article::where('active', true)
+            ->orderBy('name')
+            ->get()
+            ->map(function (Article $article) use ($existingItems) {
+                $existingItem = $existingItems->get($article->id);
+
+                return [
+                    'article_id' => $article->id,
+                    'quantity' => $existingItem?->quantity ?? 0,
+                    'unit' => $existingItem?->unit ?? $article->unit,
+                    'description' => $existingItem?->description,
+                ];
+            })
+            ->toArray();
+
+        return $data;
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $this->itemsData = $data['items'] ?? [];
+
+        unset($data['items']);
+
+        return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        $this->record->items()->delete();
+
+        foreach ($this->itemsData as $item) {
+            if ((float) ($item['quantity'] ?? 0) <= 0) {
+                continue;
+            }
+
+            $this->record->items()->create([
+                'article_id' => $item['article_id'],
+                'quantity' => $item['quantity'],
+                'unit' => $item['unit'] ?? null,
+                'description' => $item['description'] ?? null,
+            ]);
+        }
+    }
 
     protected function getHeaderActions(): array
     {

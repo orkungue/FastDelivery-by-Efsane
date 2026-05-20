@@ -65,7 +65,6 @@ class DeliveryNoteForm
                     ->schema([
                         Repeater::make('items')
                             ->label('Verfügbare Artikel')
-                            ->relationship()
                             ->default(fn () => Article::where('active', true)
                                 ->orderBy('name')
                                 ->get()
