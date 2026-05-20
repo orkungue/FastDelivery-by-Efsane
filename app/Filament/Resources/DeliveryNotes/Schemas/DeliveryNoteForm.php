@@ -37,12 +37,12 @@ class DeliveryNoteForm
                             ->preload(),
 
                         Select::make('user_id')
-                            ->label('Mitarbeiter / Fahrer')
+                            ->label('Fahrer')
                             ->relationship('user', 'name')
                             ->searchable()
                             ->preload()
-                            ->visible(fn () => Auth::user()?->isAdmin())
-                            ->default(fn () => Auth::id()),
+                            ->default(fn () => Auth::id())
+                            ->visible(fn () => Auth::user()?->isAdmin()),
 
                         Hidden::make('user_id')
                             ->default(fn () => Auth::id())
