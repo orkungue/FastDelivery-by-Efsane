@@ -28,8 +28,7 @@ class EditDeliveryNote extends EditRecord
                 return [
                     'article_id' => $article->id,
                     'quantity' => $existingItem?->quantity ?? 0,
-                    'unit' => $existingItem?->unit ?? $article->unit,
-                    'description' => $existingItem?->description,
+                    'return' => $existingItem?->return ?? false,
                 ];
             })
             ->toArray();
@@ -58,8 +57,7 @@ class EditDeliveryNote extends EditRecord
             $this->record->items()->create([
                 'article_id' => $item['article_id'],
                 'quantity' => $item['quantity'],
-                'unit' => $item['unit'] ?? null,
-                'description' => $item['description'] ?? null,
+                'return' => (bool) ($item['return'] ?? false),
             ]);
         }
     }

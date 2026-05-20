@@ -30,8 +30,7 @@ class CreateDeliveryNote extends CreateRecord
             $this->record->items()->create([
                 'article_id' => $item['article_id'],
                 'quantity' => $item['quantity'],
-                'unit' => $item['unit'] ?? null,
-                'description' => $item['description'] ?? null,
+                'return' => (bool) ($item['return'] ?? false),
             ]);
         }
     }

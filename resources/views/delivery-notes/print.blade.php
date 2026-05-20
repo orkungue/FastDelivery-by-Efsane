@@ -104,19 +104,19 @@
     <table>
         <thead>
             <tr>
+                <th>Artikelnr.</th>
                 <th>Artikel</th>
-                <th>Beschreibung</th>
                 <th class="right">Menge</th>
-                <th>Einheit</th>
+                <th>Retoure</th>
             </tr>
         </thead>
         <tbody>
             @foreach($deliveryNote->items as $item)
                 <tr>
+                    <td>{{ $item->article->article_number }}</td>
                     <td>{{ $item->article->name }}</td>
-                    <td>{{ $item->description ?? '-' }}</td>
                     <td class="right">{{ number_format($item->quantity, 2, ',', '.') }}</td>
-                    <td>{{ $item->unit }}</td>
+                    <td>{{ $item->return ? 'Ja' : 'Nein' }}</td>
                 </tr>
             @endforeach
         </tbody>

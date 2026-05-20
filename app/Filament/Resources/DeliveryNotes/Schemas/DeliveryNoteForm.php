@@ -71,8 +71,7 @@ class DeliveryNoteForm
                                 ->map(fn (Article $article) => [
                                     'article_id' => $article->id,
                                     'quantity' => 0,
-                                    'unit' => $article->unit,
-                                    'description' => null,
+                                    'return' => false,
                                 ])
                                 ->toArray())
                             ->schema([
@@ -84,7 +83,9 @@ class DeliveryNoteForm
                                     ->content(function (Get $get): string {
                                         $article = Article::find($get('article_id'));
 
-                                        return $article?->name ?? '-';
+                                        return $article
+                                            ? "{$article->article_number} - {$article->name}"
+                                            : '-';
                                     }),
 
                                 TextInput::make('quantity')
@@ -94,14 +95,9 @@ class DeliveryNoteForm
                                     ->minValue(0)
                                     ->default(0),
 
-                                TextInput::make('unit')
-                                    ->label('Einheit')
-                                    ->readOnly(),
-
-                                Textarea::make('description')
-                                    ->label('Beschreibung')
-                                    ->rows(2)
-                                    ->columnSpanFull(),
+                                Toggle::make('return')
+                                    ->label('Retoure')
+                                    ->default(false),
                             ])
                             ->columns(3)
                             ->addable(false)

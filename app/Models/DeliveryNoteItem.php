@@ -13,12 +13,12 @@ class DeliveryNoteItem extends Model
         'delivery_note_id',
         'article_id',
         'quantity',
-        'unit',
-        'description',
+        'return',
     ];
 
     protected $casts = [
         'quantity' => 'decimal:2',
+        'return' => 'boolean',
     ];
 
     public function deliveryNote()
