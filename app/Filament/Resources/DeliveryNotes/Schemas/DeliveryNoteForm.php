@@ -14,6 +14,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
 
 class DeliveryNoteForm
 {
@@ -34,6 +35,18 @@ class DeliveryNoteForm
                             ->required()
                             ->searchable()
                             ->preload(),
+
+                        Select::make('user_id')
+                            ->label('Mitarbeiter / Fahrer')
+                            ->relationship('user', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->visible(fn () => Auth::user()?->isAdmin())
+                            ->default(fn () => Auth::id()),
+
+                        Hidden::make('user_id')
+                            ->default(fn () => Auth::id())
+                            ->visible(fn () => ! Auth::user()?->isAdmin()),
 
                         DatePicker::make('delivery_date')
                             ->label('Lieferdatum')

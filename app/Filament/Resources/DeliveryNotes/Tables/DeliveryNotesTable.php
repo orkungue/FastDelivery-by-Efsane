@@ -9,6 +9,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class DeliveryNotesTable
 {
@@ -23,6 +24,12 @@ class DeliveryNotesTable
 
                 TextColumn::make('customer.name')
                     ->label('Kunde')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('user.name')
+                    ->label('Mitarbeiter')
+                    ->visible(fn () => Auth::user()?->isAdmin())
                     ->searchable()
                     ->sortable(),
 
@@ -50,7 +57,6 @@ class DeliveryNotesTable
             ->recordActions([
                 Action::make('print')
                     ->label('Drucken')
-                    ->icon('heroicon-o-printer')
                     ->url(fn ($record) => route('delivery-notes.print', $record))
                     ->openUrlInNewTab(),
 

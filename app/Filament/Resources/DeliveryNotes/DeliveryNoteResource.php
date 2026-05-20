@@ -11,16 +11,19 @@ use App\Models\DeliveryNote;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
 class DeliveryNoteResource extends Resource
 {
     protected static ?string $model = DeliveryNote::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = null;
 
-    protected static ?string $recordTitleAttribute = 'delivery_number';
+    protected static ?string $navigationLabel = 'Lieferscheine';
+
+    protected static ?string $modelLabel = 'Lieferschein';
+
+    protected static ?string $pluralModelLabel = 'Lieferscheine';
 
     public static function form(Schema $schema): Schema
     {
@@ -32,11 +35,15 @@ class DeliveryNoteResource extends Resource
         return DeliveryNotesTable::configure($table);
     }
 
-    public static function getRelations(): array
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        return [
-            //
-        ];
+        $query = parent::getEloquentQuery();
+
+        if (auth()->user()?->isAdmin()) {
+            return $query;
+        }
+
+        return $query->where('user_id', auth()->id());
     }
 
     public static function getPages(): array

@@ -11,16 +11,25 @@ use App\Models\Article;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class ArticleResource extends Resource
 {
     protected static ?string $model = Article::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = null;
 
-    protected static ?string $recordTitleAttribute = 'name';
+    protected static ?string $navigationLabel = 'Artikel';
+
+    protected static ?string $modelLabel = 'Artikel';
+
+    protected static ?string $pluralModelLabel = 'Artikel';
+
+    public static function canAccess(): bool
+    {
+        return Auth::user()?->isAdmin() ?? false;
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -30,13 +39,6 @@ class ArticleResource extends Resource
     public static function table(Table $table): Table
     {
         return ArticlesTable::configure($table);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
     }
 
     public static function getPages(): array
