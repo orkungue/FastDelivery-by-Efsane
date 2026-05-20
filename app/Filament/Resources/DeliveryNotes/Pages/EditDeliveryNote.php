@@ -13,6 +13,15 @@ class EditDeliveryNote extends EditRecord
 
     protected array $itemsData = [];
 
+    public function mount(int|string $record): void
+    {
+        parent::mount($record);
+
+        if (! auth()->user()?->isAdmin() && $this->record->user_id !== auth()->id()) {
+            abort(403);
+        }
+    }
+
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $existingItems = $this->record->items()
@@ -42,6 +51,10 @@ class EditDeliveryNote extends EditRecord
 
         unset($data['items']);
 
+        if (! auth()->user()?->isAdmin()) {
+            $data['user_id'] = auth()->id();
+        }
+
         return $data;
     }
 
@@ -64,8 +77,8 @@ class EditDeliveryNote extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return [
-            DeleteAction::make(),
-        ];
+        return auth()->user()?->isAdmin()
+            ? [DeleteAction::make()]
+            : [];
     }
 }

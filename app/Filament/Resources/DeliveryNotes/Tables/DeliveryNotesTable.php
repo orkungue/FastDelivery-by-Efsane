@@ -2,13 +2,18 @@
 
 namespace App\Filament\Resources\DeliveryNotes\Tables;
 
+use App\Models\Customer;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class DeliveryNotesTable
@@ -28,7 +33,7 @@ class DeliveryNotesTable
                     ->sortable(),
 
                 TextColumn::make('user.name')
-                    ->label('Mitarbeiter')
+                    ->label('Fahrer')
                     ->visible(fn () => Auth::user()?->isAdmin())
                     ->searchable()
                     ->sortable(),
@@ -49,9 +54,55 @@ class DeliveryNotesTable
                     })
                     ->sortable(),
 
+                TextColumn::make('items_count')
+                    ->label('Positionen')
+                    ->counts('items')
+                    ->sortable(),
+
+                IconColumn::make('has_return')
+                    ->label('Retoure')
+                    ->boolean()
+                    ->state(fn ($record): bool => $record->items()->where('return', true)->exists()),
+
                 IconColumn::make('active')
                     ->label('Aktiv')
                     ->boolean(),
+            ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'draft' => 'Entwurf',
+                        'open' => 'Offen',
+                        'delivered' => 'Geliefert',
+                        'cancelled' => 'Storniert',
+                    ]),
+
+                SelectFilter::make('customer_id')
+                    ->label('Kunde')
+                    ->options(fn () => Customer::query()
+                        ->orderBy('name')
+                        ->pluck('name', 'id'))
+                    ->searchable(),
+
+                SelectFilter::make('user_id')
+                    ->label('Fahrer')
+                    ->visible(fn () => Auth::user()?->isAdmin())
+                    ->options(fn () => User::query()
+                        ->orderBy('name')
+                        ->pluck('name', 'id'))
+                    ->searchable(),
+
+                Filter::make('has_return')
+                    ->label('Mit Retoure')
+                    ->query(fn (Builder $query): Builder => $query->whereHas('items', function (Builder $query) {
+                        return $query->where('return', true);
+                    })),
+
+                Filter::make('active')
+                    ->label('Nur aktive Lieferscheine')
+                    ->query(fn (Builder $query): Builder => $query->where('active', true))
+                    ->default(),
             ])
             ->defaultSort('delivery_date', 'desc')
             ->recordActions([

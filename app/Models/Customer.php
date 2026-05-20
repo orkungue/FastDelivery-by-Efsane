@@ -25,4 +25,9 @@ class Customer extends Model
     protected $casts = [
         'active' => 'boolean',
     ];
+
+    public function deliveryNotes()
+    {
+        return $this->hasMany(DeliveryNote::class);
+    }
 }

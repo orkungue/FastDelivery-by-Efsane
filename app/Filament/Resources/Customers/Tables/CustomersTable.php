@@ -7,7 +7,10 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class CustomersTable
 {
@@ -45,6 +48,20 @@ class CustomersTable
                 IconColumn::make('active')
                     ->label('Aktiv')
                     ->boolean(),
+            ])
+            ->filters([
+                SelectFilter::make('city')
+                    ->label('Ort')
+                    ->options(fn () => \App\Models\Customer::query()
+                        ->whereNotNull('city')
+                        ->where('city', '!=', '')
+                        ->orderBy('city')
+                        ->pluck('city', 'city')),
+
+                Filter::make('active')
+                    ->label('Nur aktive Kunden')
+                    ->query(fn (Builder $query): Builder => $query->where('active', true))
+                    ->default(),
             ])
             ->defaultSort('name')
             ->recordActions([
