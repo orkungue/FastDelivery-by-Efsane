@@ -147,20 +147,5 @@
     </div>
 @endif
 
-<br><br>
-
-<table>
-    <tr>
-        <td style="border: none; width: 50%;">
-            ___________________________<br>
-            Unterschrift Fahrer
-        </td>
-        <td style="border: none; width: 50%;">
-            ___________________________<br>
-            Unterschrift Kunde
-        </td>
-    </tr>
-</table>
-
-</body>
+<br></body>
 </html>

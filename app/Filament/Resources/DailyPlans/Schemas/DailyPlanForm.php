@@ -35,13 +35,15 @@ class DailyPlanForm
                             ->required()
                             ->searchable()
                             ->preload(),
+                            
 
                         Select::make('user_id')
                             ->label('Fahrer')
                             ->relationship('user', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->default(fn () => session('daily_plan_last_user_id')),
                     ])
                     ->columns(2)
                     ->columnSpanFull(),

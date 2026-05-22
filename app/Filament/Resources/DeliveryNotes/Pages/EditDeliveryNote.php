@@ -4,6 +4,7 @@ namespace App\Filament\Resources\DeliveryNotes\Pages;
 
 use App\Filament\Resources\DeliveryNotes\DeliveryNoteResource;
 use App\Models\Article;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
@@ -22,11 +23,15 @@ class EditDeliveryNote extends EditRecord
         }
     }
 
+    protected function isLockedForCurrentDriver(): bool
+    {
+        return ! auth()->user()?->isAdmin()
+            && filled($this->record?->customer_signature);
+    }
+
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $existingItems = $this->record->items()
-            ->get()
-            ->keyBy('article_id');
+        $existingItems = $this->record->items()->get()->keyBy('article_id');
 
         $data['items'] = Article::where('active', true)
             ->orderBy('name')
@@ -48,6 +53,10 @@ class EditDeliveryNote extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
+        if ($this->isLockedForCurrentDriver()) {
+            abort(403);
+        }
+
         $this->itemsData = $data['items'] ?? [];
 
         unset($data['items']);
@@ -81,6 +90,12 @@ class EditDeliveryNote extends EditRecord
                 'return_quantity' => $returnQuantity,
             ]);
         }
+    }
+
+    protected function getSaveFormAction(): Action
+    {
+        return parent::getSaveFormAction()
+            ->visible(fn () => ! $this->isLockedForCurrentDriver());
     }
 
     protected function getHeaderActions(): array

@@ -4,7 +4,9 @@ namespace App\Filament\Resources\DailyPlans\Pages;
 
 use App\Filament\Resources\DailyPlans\DailyPlanResource;
 use App\Support\DeliveryNumberGenerator;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Validation\ValidationException;
 
 class CreateDailyPlan extends CreateRecord
 {
@@ -16,12 +18,31 @@ class CreateDailyPlan extends CreateRecord
     {
         $this->itemsData = $data['items'] ?? [];
 
+        $hasPlannedItems = collect($this->itemsData)
+            ->contains(fn (array $item): bool => (float) ($item['quantity'] ?? 0) > 0);
+
+        if (! $hasPlannedItems) {
+            Notification::make()
+                ->title('Keine Artikelmenge eingetragen')
+                ->body('Bitte trage bei mindestens einem Artikel eine geplante Menge größer als 0 ein.')
+                ->danger()
+                ->send();
+
+            throw ValidationException::withMessages([
+                'items' => 'Bitte trage bei mindestens einem Artikel eine geplante Menge größer als 0 ein.',
+            ]);
+        }
+
         unset($data['items']);
 
+        session()->forget('daily_plan_last_customer_id');
+
+        session([
+            'daily_plan_last_user_id' => $data['user_id'] ?? null,
+        ]);
+
         $data['delivery_number'] = DeliveryNumberGenerator::make();
-
         $data['status'] = 'planned';
-
         $data['active'] = true;
 
         return $data;
@@ -30,7 +51,6 @@ class CreateDailyPlan extends CreateRecord
     protected function afterCreate(): void
     {
         foreach ($this->itemsData as $item) {
-
             $quantity = (float) ($item['quantity'] ?? 0);
 
             if ($quantity <= 0) {

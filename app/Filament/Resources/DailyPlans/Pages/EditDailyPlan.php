@@ -5,7 +5,9 @@ namespace App\Filament\Resources\DailyPlans\Pages;
 use App\Filament\Resources\DailyPlans\DailyPlanResource;
 use App\Models\Article;
 use Filament\Actions\DeleteAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Validation\ValidationException;
 
 class EditDailyPlan extends EditRecord
 {
@@ -27,9 +29,8 @@ class EditDailyPlan extends EditRecord
 
                 return [
                     'article_id' => $article->id,
+                    'article_label' => "{$article->article_number} - {$article->name}",
                     'quantity' => $existingItem?->quantity ?? 0,
-                    'delivered_quantity' => $existingItem?->delivered_quantity ?? 0,
-                    'return_quantity' => $existingItem?->return_quantity ?? 0,
                 ];
             })
             ->toArray();
@@ -40,6 +41,21 @@ class EditDailyPlan extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $this->itemsData = $data['items'] ?? [];
+
+        $hasPlannedItems = collect($this->itemsData)
+            ->contains(fn (array $item): bool => (float) ($item['quantity'] ?? 0) > 0);
+
+        if (! $hasPlannedItems) {
+            Notification::make()
+                ->title('Keine Artikelmenge eingetragen')
+                ->body('Bitte trage bei mindestens einem Artikel eine geplante Menge größer als 0 ein.')
+                ->danger()
+                ->send();
+
+            throw ValidationException::withMessages([
+                'items' => 'Bitte trage bei mindestens einem Artikel eine geplante Menge größer als 0 ein.',
+            ]);
+        }
 
         unset($data['items']);
 
@@ -52,18 +68,16 @@ class EditDailyPlan extends EditRecord
 
         foreach ($this->itemsData as $item) {
             $quantity = (float) ($item['quantity'] ?? 0);
-            $deliveredQuantity = (float) ($item['delivered_quantity'] ?? 0);
-            $returnQuantity = (float) ($item['return_quantity'] ?? 0);
 
-            if ($quantity <= 0 && $deliveredQuantity <= 0 && $returnQuantity <= 0) {
+            if ($quantity <= 0) {
                 continue;
             }
 
             $this->record->items()->create([
                 'article_id' => $item['article_id'],
                 'quantity' => $quantity,
-                'delivered_quantity' => $deliveredQuantity,
-                'return_quantity' => $returnQuantity,
+                'delivered_quantity' => 0,
+                'return_quantity' => 0,
             ]);
         }
     }
