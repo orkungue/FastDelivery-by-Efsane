@@ -109,12 +109,18 @@
 </div>
 
 <div class="section">
+    <strong>Geliefert durch Mitarbeiter:</strong>
+    {{ $deliveryNote->user?->name ?? '-' }}
+</div>
+
+<div class="section">
     <table>
         <thead>
             <tr>
                 <th>Artikelnr.</th>
                 <th>Artikel</th>
-                <th class="right">Menge</th>
+                <th class="right">Geplant</th>
+                <th class="right">Geliefert</th>
                 <th class="right">Retoure</th>
             </tr>
         </thead>
@@ -124,6 +130,7 @@
                     <td>{{ $item->article->article_number }}</td>
                     <td>{{ $item->article->name }}</td>
                     <td class="right">{{ number_format($item->quantity, 2, ',', '.') }}</td>
+                    <td class="right">{{ number_format($item->delivered_quantity, 2, ',', '.') }}</td>
                     <td class="right">{{ number_format($item->return_quantity, 2, ',', '.') }}</td>
                 </tr>
             @endforeach
@@ -142,10 +149,12 @@
     <div class="section">
         <strong>Kunden-Unterschrift / Zeichen</strong>
         <div class="signature-box">
-    <img src="{{ $deliveryNote->customer_signature }}" style="max-width: 300px; max-height: 120px;">
-</div>
+            <img src="{{ $deliveryNote->customer_signature }}" style="max-width: 300px; max-height: 120px;">
+        </div>
     </div>
 @endif
 
-<br></body>
+<br>
+
+</body>
 </html>

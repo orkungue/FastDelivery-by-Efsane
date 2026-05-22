@@ -90,6 +90,11 @@ class DailyPlansTable
             ])
             ->defaultSort('delivery_date', 'desc')
             ->recordActions([
+                Action::make('print')
+                    ->label('Drucken')
+                    ->url(fn ($record) => route('delivery-notes.print', $record))
+                    ->openUrlInNewTab(),
+
                 EditAction::make(),
             ])
             ->toolbarActions([
