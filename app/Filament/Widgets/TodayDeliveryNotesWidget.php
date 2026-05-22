@@ -4,11 +4,9 @@ namespace App\Filament\Widgets;
 
 use App\Filament\Resources\DeliveryNotes\DeliveryNoteResource;
 use App\Models\DeliveryNote;
-use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
-use Illuminate\Database\Eloquent\Builder;
 
 class TodayDeliveryNotesWidget extends BaseWidget
 {
@@ -25,7 +23,6 @@ class TodayDeliveryNotesWidget extends BaseWidget
                     ->where('user_id', auth()->id())
                     ->orderBy('delivery_date')
             )
-
             ->columns([
                 TextColumn::make('delivery_number')
                     ->label('Lieferscheinnr.')
@@ -47,19 +44,12 @@ class TodayDeliveryNotesWidget extends BaseWidget
                         default => $state,
                     }),
             ])
-
-            ->recordActions([
-                Action::make('open')
-                    ->label('Öffnen')
-                    ->url(fn (DeliveryNote $record): string =>
-                        DeliveryNoteResource::getUrl('edit', [
-                            'record' => $record,
-                        ])
-                    ),
-            ])
-
+            ->recordUrl(fn (DeliveryNote $record): string =>
+                DeliveryNoteResource::getUrl('edit', [
+                    'record' => $record,
+                ])
+            )
             ->paginated(false)
-
             ->emptyStateHeading('Keine Fahrten für heute');
     }
 }

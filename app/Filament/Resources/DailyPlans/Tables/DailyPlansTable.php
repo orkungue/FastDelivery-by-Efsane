@@ -42,30 +42,37 @@ class DailyPlansTable
 
                 TextColumn::make('status')
                     ->label('Status')
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
                         'planned' => 'Geplant',
                         'delivered' => 'Geliefert',
                         'cancelled' => 'Storniert',
-                        default => $state,
-                    }),
+                        default => $state ?? '-',
+                    })
+                    ->sortable(),
 
                 TextColumn::make('items_count')
                     ->label('Positionen')
-                    ->counts('items'),
+                    ->counts('items')
+                    ->sortable(),
             ])
             ->filters([
                 Filter::make('today')
                     ->label('Heute')
+                    ->default()
                     ->query(fn (Builder $query): Builder => $query->whereDate('delivery_date', today())),
 
                 SelectFilter::make('customer_id')
                     ->label('Kunde')
-                    ->options(fn () => Customer::query()->orderBy('name')->pluck('name', 'id'))
+                    ->options(fn () => Customer::query()
+                        ->orderBy('name')
+                        ->pluck('name', 'id'))
                     ->searchable(),
 
                 SelectFilter::make('user_id')
                     ->label('Fahrer')
-                    ->options(fn () => User::query()->orderBy('name')->pluck('name', 'id'))
+                    ->options(fn () => User::query()
+                        ->orderBy('name')
+                        ->pluck('name', 'id'))
                     ->searchable(),
 
                 SelectFilter::make('status')
@@ -76,20 +83,20 @@ class DailyPlansTable
                         'cancelled' => 'Storniert',
                     ]),
             ])
+            ->headerActions([
+                Action::make('export_excel')
+                    ->label('Excel Export')
+                    ->action(fn ($livewire) => self::exportFilteredPlans($livewire)),
+            ])
             ->defaultSort('delivery_date', 'desc')
             ->recordActions([
                 EditAction::make(),
             ])
-            ->headerActions([
-    Action::make('export_excel')
-        ->label('Excel Export')
-        ->action(fn ($livewire) => self::exportFilteredPlans($livewire)),
-])
-->toolbarActions([
-    BulkActionGroup::make([
-        DeleteBulkAction::make(),
-    ]),
-]);
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ]);
     }
 
     public static function exportFilteredPlans($livewire)

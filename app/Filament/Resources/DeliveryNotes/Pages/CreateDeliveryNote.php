@@ -4,7 +4,9 @@ namespace App\Filament\Resources\DeliveryNotes\Pages;
 
 use App\Filament\Resources\DeliveryNotes\DeliveryNoteResource;
 use App\Support\DeliveryNumberGenerator;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Validation\ValidationException;
 
 class CreateDeliveryNote extends CreateRecord
 {
@@ -16,9 +18,28 @@ class CreateDeliveryNote extends CreateRecord
     {
         $this->itemsData = $data['items'] ?? [];
 
+        $hasItems = collect($this->itemsData)
+            ->contains(function (array $item): bool {
+                return (float) ($item['quantity'] ?? 0) > 0
+                    || (float) ($item['delivered_quantity'] ?? 0) > 0
+                    || (float) ($item['return_quantity'] ?? 0) > 0;
+            });
+
+        if (! $hasItems) {
+            Notification::make()
+                ->title('Keine Artikelmenge eingetragen')
+                ->body('Bitte trage bei mindestens einem Artikel eine Menge größer als 0 ein.')
+                ->danger()
+                ->send();
+
+            throw ValidationException::withMessages([
+                'items' => 'Bitte trage bei mindestens einem Artikel eine Menge größer als 0 ein.',
+            ]);
+        }
+
         unset($data['items']);
 
-        $data['delivery_number'] = $data['delivery_number'] ?: DeliveryNumberGenerator::make();
+        $data['delivery_number'] = DeliveryNumberGenerator::make();
         $data['status'] = 'planned';
         $data['active'] = true;
 

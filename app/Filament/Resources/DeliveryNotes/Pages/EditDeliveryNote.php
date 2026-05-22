@@ -31,7 +31,9 @@ class EditDeliveryNote extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $existingItems = $this->record->items()->get()->keyBy('article_id');
+        $existingItems = $this->record->items()
+            ->get()
+            ->keyBy('article_id');
 
         $data['items'] = Article::where('active', true)
             ->orderBy('name')
@@ -62,8 +64,16 @@ class EditDeliveryNote extends EditRecord
         unset($data['items']);
 
         if (! auth()->user()?->isAdmin()) {
-            unset($data['delivery_number'], $data['customer_id'], $data['delivery_date']);
+            unset(
+                $data['delivery_number'],
+                $data['customer_id'],
+                $data['delivery_date']
+            );
+
             $data['user_id'] = auth()->id();
+        }
+
+        if (filled($data['customer_signature'] ?? null)) {
             $data['status'] = 'delivered';
         }
 
@@ -90,6 +100,15 @@ class EditDeliveryNote extends EditRecord
                 'return_quantity' => $returnQuantity,
             ]);
         }
+
+        $this->record->refresh();
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return static::getResource()::getUrl('edit', [
+            'record' => $this->record,
+        ]);
     }
 
     protected function getSaveFormAction(): Action

@@ -16,6 +16,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
+use App\Models\User;
 
 class DeliveryNoteForm
 {
@@ -35,21 +36,33 @@ class DeliveryNoteForm
                                 'Lieferschein: ' . ($record?->delivery_number ?? '-') .
                                 ' | Planungsdatum: ' . ($record?->delivery_date?->format('d.m.Y') ?? '-')
                             )
-                            ->visible(fn () => ! Auth::user()?->isAdmin())
+                            ->visible(fn (string $operation): bool =>
+                                $operation === 'edit' && ! Auth::user()?->isAdmin()
+                            )
                             ->columnSpanFull(),
 
                         TextInput::make('delivery_number')
                             ->label('Lieferscheinnummer')
-                            ->required()
+                            ->required(fn (string $operation): bool =>
+                                $operation === 'edit' && Auth::user()?->isAdmin()
+                            )
                             ->unique(ignoreRecord: true)
-                            ->visible(fn () => Auth::user()?->isAdmin()),
+                            ->visible(fn (string $operation): bool =>
+                                $operation === 'edit' && Auth::user()?->isAdmin()
+                            ),
 
                         DatePicker::make('delivery_date')
                             ->label('Planungsdatum')
                             ->required()
                             ->displayFormat('d.m.Y')
                             ->native(false)
-                            ->visible(fn () => Auth::user()?->isAdmin()),
+                            ->default(now())
+                            ->visible(fn (string $operation): bool =>
+                                $operation === 'create' || Auth::user()?->isAdmin()
+                            )
+                            ->disabled(fn (string $operation): bool =>
+                                $operation === 'edit' && ! Auth::user()?->isAdmin()
+                            ),
 
                         Select::make('customer_id')
                             ->label('Kunde')
@@ -57,16 +70,25 @@ class DeliveryNoteForm
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->visible(fn () => Auth::user()?->isAdmin()),
+                            ->visible(fn (string $operation): bool =>
+                                $operation === 'create' || Auth::user()?->isAdmin()
+                            )
+                            ->disabled(fn (string $operation): bool =>
+                                $operation === 'edit' && ! Auth::user()?->isAdmin()
+                            ),
 
-                        Select::make('user_id')
-                            ->label('Fahrer')
-                            ->relationship('user', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->visible(fn () => Auth::user()?->isAdmin()),
+Select::make('user_id')
+    ->label('Fahrer')
+    ->options(User::query()->orderBy('name')->pluck('name', 'id')->toArray())
+    ->required()
+    ->searchable()
+    ->visible(fn (): bool => Auth::user()?->isAdmin()),
 
-                        Placeholder::make('Link:')
+Hidden::make('user_id')
+    ->default(fn () => Auth::id())
+    ->dehydrated(fn (): bool => ! Auth::user()?->isAdmin()),
+
+                        Placeholder::make('customer_maps_link')
                             ->label('')
                             ->content(function ($record) {
                                 if (! $record?->customer) {
@@ -92,10 +114,6 @@ class DeliveryNoteForm
                             })
                             ->visible(fn ($record) => filled($record?->customer_id))
                             ->columnSpanFull(),
-
-                        Hidden::make('user_id')
-                            ->default(fn () => Auth::id())
-                            ->visible(fn () => ! Auth::user()?->isAdmin()),
 
                         Textarea::make('notes')
                             ->label('Notiz')

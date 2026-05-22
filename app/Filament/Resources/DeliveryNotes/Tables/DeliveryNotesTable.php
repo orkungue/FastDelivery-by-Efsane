@@ -45,12 +45,11 @@ class DeliveryNotesTable
 
                 TextColumn::make('status')
                     ->label('Status')
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'draft' => 'Entwurf',
-                        'open' => 'Offen',
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'planned' => 'Geplant',
                         'delivered' => 'Geliefert',
                         'cancelled' => 'Storniert',
-                        default => $state,
+                        default => $state ?? '-',
                     })
                     ->sortable(),
 
@@ -72,8 +71,7 @@ class DeliveryNotesTable
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options([
-                        'draft' => 'Entwurf',
-                        'open' => 'Offen',
+                        'planned' => 'Geplant',
                         'delivered' => 'Geliefert',
                         'cancelled' => 'Storniert',
                     ]),
@@ -98,11 +96,11 @@ class DeliveryNotesTable
                     ->query(fn (Builder $query): Builder => $query->whereHas('items', function (Builder $query) {
                         return $query->where('return_quantity', '>', 0);
                     })),
-
-                Filter::make('active')
-                    ->label('Nur aktive Lieferscheine')
-                    ->query(fn (Builder $query): Builder => $query->where('active', true))
-                    ->default(),
+            ])
+            ->headerActions([
+                Action::make('export_excel')
+                    ->label('Excel Export')
+                    ->action(fn ($livewire) => self::exportFilteredDeliveryNotes($livewire)),
             ])
             ->defaultSort('delivery_date', 'desc')
             ->recordActions([
@@ -118,5 +116,64 @@ class DeliveryNotesTable
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function exportFilteredDeliveryNotes($livewire)
+    {
+        $deliveryNotes = $livewire
+            ->getFilteredTableQuery()
+            ->with([
+                'customer',
+                'user',
+                'items.article',
+            ])
+            ->get();
+
+        $filename = 'lieferscheine-export-' . now()->format('Y-m-d-H-i') . '.csv';
+
+        return response()->streamDownload(function () use ($deliveryNotes) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [
+                'Lieferdatum',
+                'Lieferscheinnummer',
+                'Status',
+                'Kunde',
+                'Fahrer',
+                'Artikelnummer',
+                'Artikel',
+                'Geplante Menge',
+                'Gelieferte Menge',
+                'Retoure Menge',
+                'Notiz',
+            ], ';');
+
+            foreach ($deliveryNotes as $deliveryNote) {
+                foreach ($deliveryNote->items as $item) {
+                    fputcsv($handle, [
+                        $deliveryNote->delivery_date?->format('d.m.Y'),
+                        $deliveryNote->delivery_number,
+                        match ($deliveryNote->status) {
+                            'planned' => 'Geplant',
+                            'delivered' => 'Geliefert',
+                            'cancelled' => 'Storniert',
+                            default => $deliveryNote->status,
+                        },
+                        $deliveryNote->customer?->name,
+                        $deliveryNote->user?->name,
+                        $item->article?->article_number,
+                        $item->article?->name,
+                        number_format((float) $item->quantity, 2, ',', '.'),
+                        number_format((float) $item->delivered_quantity, 2, ',', '.'),
+                        number_format((float) $item->return_quantity, 2, ',', '.'),
+                        $deliveryNote->notes,
+                    ], ';');
+                }
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 }
