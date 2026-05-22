@@ -16,14 +16,18 @@ class ArticleForm
             ->components([
                 Section::make('Artikeldaten')
                     ->schema([
-                        TextInput::make('article_number')
-                            ->label('Artikelnummer')
-                            ->required()
-                            ->unique(ignoreRecord: true),
+TextInput::make('article_number')
+    ->label('Artikelnr.')
+    ->required()
+    ->unique(ignoreRecord: true)
+    ->disabled(fn (string $operation): bool => $operation === 'edit')
+    ->dehydrated(),
 
-                        TextInput::make('name')
-                            ->label('Bezeichnung')
-                            ->required(),
+TextInput::make('name')
+    ->label('Bezeichnung')
+    ->required()
+    ->disabled(fn (string $operation): bool => $operation === 'edit')
+    ->dehydrated(),
 
                         TextInput::make('unit')
                             ->label('Einheit')

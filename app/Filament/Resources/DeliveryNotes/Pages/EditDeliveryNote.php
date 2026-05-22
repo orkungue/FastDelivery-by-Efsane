@@ -35,7 +35,13 @@ class EditDeliveryNote extends EditRecord
             ->get()
             ->keyBy('article_id');
 
-        $data['items'] = Article::where('active', true)
+        $existingArticleIds = $existingItems->keys()->all();
+
+        $data['items'] = Article::query()
+            ->where(function ($query) use ($existingArticleIds) {
+                $query->where('active', true)
+                    ->orWhereIn('id', $existingArticleIds);
+            })
             ->orderBy('name')
             ->get()
             ->map(function (Article $article) use ($existingItems) {
